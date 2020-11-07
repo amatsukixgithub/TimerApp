@@ -13,10 +13,13 @@ class ViewController: UIViewController {
     var timer : Timer?
     
     // カウント（経過時間）の変数を作成
-    var count = 0
+    var count : NSDecimalNumber = 0.0
     
     // 設定値を扱うキーを設定
     let settingKey = "timer_value"
+    
+    // タイマーの更新頻度
+    let timerPerSeconds = NSDecimalNumber(string: "0.001")
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -26,7 +29,7 @@ class ViewController: UIViewController {
         let settings = UserDefaults.standard
         
         // UserDefaultsに初期値を登録
-        settings.register(defaults: [settingKey:10])
+        settings.register(defaults: [settingKey:10.0])
         
     }
 
@@ -60,7 +63,7 @@ class ViewController: UIViewController {
         }
         
         // タイマーをスタート
-        timer = Timer.scheduledTimer(timeInterval: 1.0, target: self, selector: #selector(self.timerInterrupt(_:)), userInfo: nil, repeats: true)
+        timer = Timer.scheduledTimer(timeInterval: timerPerSeconds.doubleValue, target: self, selector: #selector(self.timerInterrupt(_:)), userInfo: nil, repeats: true)
     }
     
     // ストップボタン
@@ -76,19 +79,20 @@ class ViewController: UIViewController {
     }
     
     // 画面の更新をする（戻り値：remainCount：残り時間）
-    func displayUpdate() -> Int {
+    func displayUpdate() -> NSDecimalNumber {
         
         // UserDefaultsのインスタンスを生成
         let settings = UserDefaults.standard
         
         // 取得した秒数をtimerValuesに渡す
-        let timerValue = settings.integer(forKey: settingKey)
+        let timerValue = settings.string(forKey: settingKey)
         
         // 残り時間(remainCount)を生成
-        let remainCount = timerValue - count
+        let remainCount = NSDecimalNumber(string: timerValue).subtracting(count)
         
         // remainCount（残り時間）をラベルに表示
-        countDownLabel.text = "残り\(remainCount)秒"
+        countDownLabel.text =
+            String(format: "残り%.3f秒", remainCount.doubleValue)
         
         // 残り時間を戻り値に設定
         return remainCount
@@ -97,11 +101,11 @@ class ViewController: UIViewController {
     // 経過時間の処理
     @objc func timerInterrupt(_ timer:Timer) {
         
-        // count（経過時間）に+1していく
-        count += 1
+        // count（経過時間）をプラスしていく
+        count = count.adding(timerPerSeconds)
         
-        // remainCount(残り時間)が0以下のとき、タイマーを止める
-        if displayUpdate() <= 0 {
+        // remainCount(残り時間)が0のとき、タイマーを止める
+        if displayUpdate().compare(NSDecimalNumber(string: "0.0")) == ComparisonResult.orderedSame {
             // 初期化処理
             count = 0
             
